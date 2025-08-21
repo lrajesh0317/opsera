@@ -18,7 +18,7 @@ pipeline {
   }
 
   tools { maven 'Maven_3_9'; jdk 'JDK17' }
-  options { timestamps(); ansiColor('xterm'); timeout(time: 45, unit: 'MINUTES') }
+  // options { timestamps(); ansiColor('xterm'); timeout(time: 45, unit: 'MINUTES') }
 
   stages {
     stage('Checkout') {
