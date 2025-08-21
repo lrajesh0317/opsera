@@ -1,0 +1,10 @@
+{
+  "info": { "name": "CI Demo Functional", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+  "item": [
+    {
+      "name": "Hello endpoint",
+      "request": { "method": "GET", "url": "http://host.docker.internal:8080/hello" },
+      "response": []
+    }
+  ]
+}
