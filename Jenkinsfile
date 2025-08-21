@@ -10,7 +10,7 @@ pipeline {
 
   environment {
     CRED_NEXUS_DOCKER = 'nexus-docker-creds'
-    NEXUS_REG_URL = "http://192.168.1.50:8082"
+    NEXUS_REG_URL = "http://http://54.209.208.145:8082"
     NEXUS_REPO = "docker-hosted"
     APP_NAME = "ci-demo"
   }
