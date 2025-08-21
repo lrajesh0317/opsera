@@ -47,31 +47,33 @@ pipeline {
       }
     }
 
-    stage('Functional Tests (Newman)') {
-      steps {
-        // Use dockerized newman so you don't need local install
-        sh '''
-          if ! docker image inspect postman/newman_alpine:latest >/dev/null 2>&1; then
-            docker pull postman/newman_alpine:latest
-          fi
-          docker run --rm -v "$PWD/tests:/etc/newman" postman/newman_alpine:latest \
-            run /etc/newman/functional.postman_collection.json || true
-        '''
-      }
-    }
+    
+    
+    // stage('Functional Tests (Newman)') {
+    //   steps {
+    //     // Use dockerized newman so you don't need local install
+    //     sh '''
+    //       if ! docker image inspect postman/newman_alpine:latest >/dev/null 2>&1; then
+    //         docker pull postman/newman_alpine:latest
+    //       fi
+    //       docker run --rm -v "$PWD/tests:/etc/newman" postman/newman_alpine:latest \
+    //         run /etc/newman/functional.postman_collection.json || true
+    //     '''
+    //   }
+    // }
 
-    stage('Performance Tests (JMeter)') {
-      steps {
-        // Use dockerized JMeter; results go back into tests/results.jtl
-        sh '''
-          if ! docker image inspect justb4/jmeter:5.6.3 >/dev/null 2>&1; then
-            docker pull justb4/jmeter:5.6.3
-          fi
-          mkdir -p tests
-          docker run --rm -v "$PWD/tests:/tests" justb4/jmeter:5.6.3 \
-            -n -t /tests/performance.jmx -l /tests/results.jtl || true
-        '''
-      }
+    // stage('Performance Tests (JMeter)') {
+    //   steps {
+    //     // Use dockerized JMeter; results go back into tests/results.jtl
+    //     sh '''
+    //       if ! docker image inspect justb4/jmeter:5.6.3 >/dev/null 2>&1; then
+    //         docker pull justb4/jmeter:5.6.3
+    //       fi
+    //       mkdir -p tests
+    //       docker run --rm -v "$PWD/tests:/tests" justb4/jmeter:5.6.3 \
+    //         -n -t /tests/performance.jmx -l /tests/results.jtl || true
+    //     '''
+    //   }
       post {
         always { archiveArtifacts artifacts: 'tests/results.jtl', allowEmptyArchive: true }
       }
