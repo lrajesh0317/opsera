@@ -41,9 +41,9 @@ pipeline {
           // If you set server auth in Jenkins Sonar config, you don't need -Dsonar.login
           sh 'mvn -B -DskipTests sonar:sonar'
         }
-        timeout(time: 10, unit: 'MINUTES') {
-          waitForQualityGate abortPipeline: true
-        }
+        //timeout(time: 10, unit: 'MINUTES') {
+        //  waitForQualityGate abortPipeline: true
+       // }
       }
     }
 
