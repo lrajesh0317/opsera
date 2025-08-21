@@ -42,7 +42,7 @@ pipeline {
       }
     }
 
-    stage('Docker Build') {
+   stage('Docker Build') {
       steps {
         sh 'docker build -t ${IMAGE_NAME}:${VERSION} .'
       }
@@ -51,22 +51,24 @@ pipeline {
     stage('Push → Nexus (Docker hosted)') {
       steps {
         script {
-          sh "docker tag ${IMAGE_NAME}:${VERSION} ${NEXUS_IMAGE}"
-          docker.withRegistry("${NEXUS_REG_URL}", "${CRED_NEXUS_DOCKER}") {
-            sh "docker push ${NEXUS_IMAGE}"
+          // Correct tag format: no "http://"
+          def nexusTarget = "${NEXUS_HOST}:${NEXUS_DOCKER_PORT}/${NEXUS_REPO}/${IMAGE_NAME}:${VERSION}"
+
+          sh "docker tag ${IMAGE_NAME}:${VERSION} ${nexusTarget}"
+          docker.withRegistry("http://${NEXUS_HOST}:${NEXUS_DOCKER_PORT}", "${CRED_NEXUS_DOCKER}") {
+            sh "docker push ${nexusTarget}"
           }
-          echo "✅ Pushed: ${NEXUS_IMAGE}"
+          echo "Pushed: ${nexusTarget}"
         }
       }
     }
-  }
 
   post {
     success {
-      echo "✅ Build OK → ${NEXUS_IMAGE}"
+      echo "Build OK → ${NEXUS_IMAGE}"
     }
     failure {
-      echo '❌ Pipeline failed'
+      echo 'Pipeline failed'
     }
   }
 }
