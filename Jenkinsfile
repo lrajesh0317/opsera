@@ -77,7 +77,7 @@ pipeline {
       post {
         always { archiveArtifacts artifacts: 'tests/results.jtl', allowEmptyArchive: true }
       }
-    }
+    
 
     stage('Docker Build') {
       steps {
