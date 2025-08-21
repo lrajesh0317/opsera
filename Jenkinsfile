@@ -3,29 +3,38 @@ pipeline {
 
   environment {
     // ====== EDIT ME ======
-    IMAGE_NAME        = 'ci-demo'
-    SONARQUBE_NAME    = 'sonarqube'                 // Jenkins > Configure System name
-    NEXUS_HOST        = '54.209.208.145'            // << your Nexus IP/DNS
-    NEXUS_DOCKER_PORT = '8082'                      // Docker (hosted) port
-    NEXUS_REPO        = 'docker-hosted'             // Repo name
-    NEXUS_REG_URL     = "http://${NEXUS_HOST}:${NEXUS_DOCKER_PORT}"
-    NEXUS_IMAGE       = "${NEXUS_REG_URL}/${NEXUS_REPO}/${IMAGE_NAME}:${BUILD_NUMBER}"
-    CRED_NEXUS_DOCKER = 'nexus-docker-creds'        // Jenkins Username/Password
-    VERSION           = "${BUILD_NUMBER}"
+    IMAGE_NAME         = 'ci-demo'
+    SONARQUBE_NAME     = 'sonarqube'                 // Jenkins > Configure System name
+    NEXUS_HOST         = '54.209.208.145'            // Nexus IP/DNS
+    NEXUS_DOCKER_PORT  = '8082'                      // Docker (hosted) port
+    NEXUS_REPO         = 'docker-hosted'             // Repo name
+
+    // Use this ONLY for login/withRegistry (includes http://)
+    NEXUS_REG_HTTP     = "http://${NEXUS_HOST}:${NEXUS_DOCKER_PORT}"
+
+    // Use this for image names/tags (MUST NOT include http://)
+    NEXUS_IMAGE        = "${NEXUS_HOST}:${NEXUS_DOCKER_PORT}/${NEXUS_REPO}/${IMAGE_NAME}:${BUILD_NUMBER}"
+
+    CRED_NEXUS_DOCKER  = 'nexus-docker-creds'        // Jenkins Username/Password
+    VERSION            = "${BUILD_NUMBER}"
   }
 
-  tools { 
-    maven 'Maven_3_9' 
-    jdk 'JDK17' 
+  tools {
+    maven 'Maven_3_9'
+    jdk   'JDK17'
   }
 
   stages {
     stage('Checkout') {
-      steps { checkout scm }
+      steps {
+        checkout scm
+      }
     }
 
     stage('Maven Build & Unit Tests') {
-      steps { sh 'mvn -B -U clean verify' }
+      steps {
+        sh 'mvn -B -U clean verify'
+      }
       post {
         always {
           junit '**/target/surefire-reports/*.xml'
@@ -34,34 +43,39 @@ pipeline {
       }
     }
 
-    stage('SonarQube Scan + Quality Gate') {
+    stage('SonarQube Scan') {
       steps {
         withSonarQubeEnv("${env.SONARQUBE_NAME}") {
           sh 'mvn -B -DskipTests sonar:sonar'
         }
+        // If you want to enforce the gate, uncomment:
+        // timeout(time: 10, unit: 'MINUTES') {
+        //   waitForQualityGate abortPipeline: true
+        // }
       }
     }
 
-   stage('Docker Build') {
+    stage('Docker Build') {
       steps {
         sh 'docker build -t ${IMAGE_NAME}:${VERSION} .'
       }
     }
 
-    stage('Push → Nexus (Docker hosted)') {
+    stage('Push to Nexus (Docker hosted)') {
       steps {
         script {
-          // Correct tag format: no "http://"
-          def nexusTarget = "${NEXUS_HOST}:${NEXUS_DOCKER_PORT}/${NEXUS_REPO}/${IMAGE_NAME}:${VERSION}"
+          // Tag must NOT include "http://"
+          sh "docker tag ${IMAGE_NAME}:${VERSION} ${NEXUS_IMAGE}"
 
-          sh "docker tag ${IMAGE_NAME}:${VERSION} ${nexusTarget}"
-          docker.withRegistry("http://${NEXUS_HOST}:${NEXUS_DOCKER_PORT}", "${CRED_NEXUS_DOCKER}") {
-            sh "docker push ${nexusTarget}"
+          // Login/push using http URL
+          docker.withRegistry("${NEXUS_REG_HTTP}", "${CRED_NEXUS_DOCKER}") {
+            sh "docker push ${NEXUS_IMAGE}"
           }
-          echo "Pushed: ${nexusTarget}"
+          echo "Pushed: ${NEXUS_IMAGE}"
         }
       }
     }
+  } // <-- closes stages
 
   post {
     success {
@@ -71,5 +85,4 @@ pipeline {
       echo 'Pipeline failed'
     }
   }
-}
 }
