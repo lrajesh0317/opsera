@@ -5,7 +5,7 @@ pipeline {
     // ====== EDIT ME ======
     IMAGE_NAME        = 'ci-demo'
     SONARQUBE_NAME    = 'sonarqube'                 // Jenkins > Configure System name
-    NEXUS_HOST        = '54.209.208.145              // << your Nexus IP/DNS
+    NEXUS_HOST        = '54.209.208.145'              // << your Nexus IP/DNS
     NEXUS_DOCKER_PORT = '8082'                      // Docker (hosted) port
     NEXUS_REPO        = 'docker-hosted'             // Repo name
     NEXUS_REG_URL     = "http://${NEXUS_HOST}:${NEXUS_DOCKER_PORT}"
