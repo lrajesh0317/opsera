@@ -8,14 +8,6 @@ pipeline {
     CHART_PATH    = 'hello-chart'           // Path to your chart in the repo/WS
   }
 
-  parameters {
-    string(name: 'NEXUS_HOST', defaultValue: '54.209.208.145', description: 'Nexus host/IP')
-    string(name: 'NEXUS_PORT', defaultValue: '8082',           description: 'Nexus Docker (hosted) port')
-    string(name: 'NEXUS_REPO', defaultValue: 'docker-hosted',  description: 'Nexus repo name')
-    string(name: 'IMAGE_NAME', defaultValue: 'ci-demo',        description: 'Image name in Nexus')
-    string(name: 'IMAGE_TAG',  defaultValue: '1',              description: 'Already-built image tag to deploy')
-  }
-
   stages {
     stage('Helm Deploy') {
       steps {
