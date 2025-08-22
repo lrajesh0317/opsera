@@ -2,10 +2,10 @@ pipeline {
   agent { label 'k8s-master' }
 
   environment {
-    KUBECONFIG_ID = 'kubeconfig-single'     // Jenkins Secret File with kubeconfig
-    RELEASE       = 'hello'                 // Helm release name
-    NAMESPACE     = 'hello'                 // Kubernetes namespace
-    CHART_PATH    = 'hello-chart'           // Path to your chart in the repo/WS
+    KUBECONFIG_ID = 'kubeconfig-single'   // Jenkins Secret File with kubeconfig
+    RELEASE       = 'hello'               // Helm release name
+    NAMESPACE     = 'hello'               // Existing Kubernetes namespace
+    CHART_PATH    = 'hello-chart'         // Path to chart in workspace
   }
 
   stages {
@@ -16,16 +16,15 @@ pipeline {
             set -e
             export KUBECONFIG="$KCFG"
 
-            kubectl get ns ${NAMESPACE} || kubectl create ns ${NAMESPACE}
-
+            # Deploy/upgrade using prebuilt image
             helm upgrade --install ${RELEASE} ${CHART_PATH} \
               --namespace ${NAMESPACE} \
               --set image.repository="${NEXUS_HOST}:${NEXUS_PORT}/${NEXUS_REPO}/${IMAGE_NAME}" \
               --set image.tag="${IMAGE_TAG}" \
               --wait --timeout 5m
 
+            # Verify rollout and show resources
             kubectl -n ${NAMESPACE} rollout status deploy/${RELEASE} --timeout=120s
-
             kubectl -n ${NAMESPACE} get deploy,po,svc -o wide
           '''
         }
@@ -34,7 +33,11 @@ pipeline {
   }
 
   post {
-    success { echo "Deployed ${params.NEXUS_HOST}:${params.NEXUS_PORT}/${params.NEXUS_REPO}/${params.IMAGE_NAME}:${params.IMAGE_TAG} to ${env.NAMESPACE}" }
-    failure { echo  "Helm deploy failed (release: ${env.RELEASE})" }
+    success {
+      echo "Deployed ${params.NEXUS_HOST}:${params.NEXUS_PORT}/${params.NEXUS_REPO}/${params.IMAGE_NAME}:${params.IMAGE_TAG} to namespace ${env.NAMESPACE}"
+    }
+    failure {
+      echo  "Helm deploy failed (release: ${env.RELEASE})"
+    }
   }
 }
