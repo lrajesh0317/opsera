@@ -1,0 +1,16 @@
+pipeline {
+  agent { label 'k8s-master' }  // forces run on master node
+  stages {
+    stage('Deploy with Helm') {
+      steps {
+        sh '''
+          kubectl get nodes
+          helm upgrade --install hello charts/hello \
+            --namespace hello --create-namespace \
+            --set image.repository=54.209.208.145:8082/docker-hosted/ci-demo \
+            --set image.tag=${BUILD_NUMBER}
+        '''
+      }
+    }
+  }
+}
