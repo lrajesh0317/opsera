@@ -1,16 +1,48 @@
 pipeline {
-  agent { label 'k8s-master' }  // forces run on master node
+  agent any
+  environment {
+    NEXUS_CREDS_ID   = 'nexus-docker-creds'
+    KUBECONFIG_ID    = 'kubeconfig-single'
+    IMAGE_NAME       = 'ci-demo'
+    NEXUS_HOST       = '54.209.208.145'
+    NEXUS_PORT       = '8082'
+    NEXUS_REPO       = 'docker-hosted'
+  }
   stages {
-    stage('Deploy with Helm') {
+    stage('Checkout') {
+      steps { checkout scm }
+    }
+    stage('Docker Build & Push → Nexus') {
+      environment {
+        NEXUS_REG_HTTP = "http://${NEXUS_HOST}:${NEXUS_PORT}"
+        IMAGE_REF      = "${NEXUS_HOST}:${NEXUS_PORT}/${NEXUS_REPO}/${IMAGE_NAME}:${BUILD_NUMBER}"
+      }
       steps {
-        sh '''
-          kubectl get nodes
-          helm upgrade --install hello charts/hello \
-            --namespace hello --create-namespace \
-            --set image.repository=54.209.208.145:8082/docker-hosted/ci-demo \
-            --set image.tag=${BUILD_NUMBER}
-        '''
+        script {
+          sh "docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} ."
+          sh "docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${IMAGE_REF}"
+          docker.withRegistry("${NEXUS_REG_HTTP}", "${NEXUS_CREDS_ID}") {
+            sh "docker push ${IMAGE_REF}"
+          }
+          echo "✅ Pushed: ${IMAGE_REF}"
+        }
       }
     }
+    stage('Helm Deploy') {
+      steps {
+        withCredentials([file(credentialsId: KUBECONFIG_ID, variable: 'KCFG')]) {
+          sh '''
+            export KUBECONFIG="$KCFG"
+            kubectl get ns hello || kubectl create ns hello
+            helm upgrade --install hello hello-chart               --namespace hello               --set image.repository="${NEXUS_HOST}:${NEXUS_PORT}/${NEXUS_REPO}/${IMAGE_NAME}"               --set image.tag="${BUILD_NUMBER}"               --wait --timeout 5m
+            kubectl -n hello rollout status deploy/hello --timeout=120s
+          '''
+        }
+      }
+    }
+  }
+  post {
+    success { echo "✅ CI/CD success: deployed ${IMAGE_NAME}:${BUILD_NUMBER}" }
+    failure { echo "❌ Pipeline failed" }
   }
 }

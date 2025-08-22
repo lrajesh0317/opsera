@@ -1,0 +1,11 @@
+replicaCount: 1
+
+image:
+  repository: 54.209.208.145:8082/docker-hosted/ci-demo
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: NodePort
+  port: 80
+  targetPort: 8080
