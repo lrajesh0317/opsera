@@ -24,7 +24,7 @@ pipeline {
           docker.withRegistry("${NEXUS_REG_HTTP}", "${NEXUS_CREDS_ID}") {
             sh "docker push ${IMAGE_REF}"
           }
-          echo "✅ Pushed: ${IMAGE_REF}"
+          echo "Pushed: ${IMAGE_REF}"
         }
       }
     }
@@ -42,7 +42,7 @@ pipeline {
     }
   }
   post {
-    success { echo "✅ CI/CD success: deployed ${IMAGE_NAME}:${BUILD_NUMBER}" }
-    failure { echo "❌ Pipeline failed" }
+    success { echo "CI/CD success: deployed ${IMAGE_NAME}:${BUILD_NUMBER}" }
+    failure { echo "Pipeline failed" }
   }
 }
