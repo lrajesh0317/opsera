@@ -2,20 +2,14 @@ pipeline {
   agent any
 
   environment {
-    // ====== EDIT ME ======
     IMAGE_NAME         = 'ci-demo'
-    SONARQUBE_NAME     = 'sonarqube'                 // Jenkins > Configure System name
-    NEXUS_HOST         = '54.209.208.145'            // Nexus IP/DNS
-    NEXUS_DOCKER_PORT  = '8082'                      // Docker (hosted) port
-    NEXUS_REPO         = 'docker-hosted'             // Repo name
-
-    // Use this ONLY for login/withRegistry (includes http://)
+    SONARQUBE_NAME     = 'sonarqube'                 
+    NEXUS_HOST         = '54.209.208.145'            
+    NEXUS_DOCKER_PORT  = '8082'                      
+    NEXUS_REPO         = 'docker-hosted'             
     NEXUS_REG_HTTP     = "http://${NEXUS_HOST}:${NEXUS_DOCKER_PORT}"
-
-    // Use this for image names/tags (MUST NOT include http://)
     NEXUS_IMAGE        = "${NEXUS_HOST}:${NEXUS_DOCKER_PORT}/${NEXUS_REPO}/${IMAGE_NAME}:${BUILD_NUMBER}"
-
-    CRED_NEXUS_DOCKER  = 'nexus-docker-creds'        // Jenkins Username/Password
+    CRED_NEXUS_DOCKER  = 'nexus-docker-creds'        
     VERSION            = "${BUILD_NUMBER}"
   }
 
@@ -48,10 +42,7 @@ pipeline {
         withSonarQubeEnv("${env.SONARQUBE_NAME}") {
           sh 'mvn -B -DskipTests sonar:sonar'
         }
-        // If you want to enforce the gate, uncomment:
-        // timeout(time: 10, unit: 'MINUTES') {
-        //   waitForQualityGate abortPipeline: true
-        // }
+        
       }
     }
 
@@ -75,7 +66,7 @@ pipeline {
         }
       }
     }
-  } // <-- closes stages
+  } 
 
   post {
     success {
