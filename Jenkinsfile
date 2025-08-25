@@ -25,7 +25,7 @@ pipeline {
       }
     }
 
-    stage('Maven Build & Unit Tests') {
+    stage('Build & Tests') {
       steps {
         sh 'mvn -B -U clean verify'
       }
@@ -55,10 +55,8 @@ pipeline {
     stage('Push to Nexus (Docker hosted)') {
       steps {
         script {
-          // Tag must NOT include "http://"
           sh "docker tag ${IMAGE_NAME}:${VERSION} ${NEXUS_IMAGE}"
 
-          // Login/push using http URL
           docker.withRegistry("${NEXUS_REG_HTTP}", "${CRED_NEXUS_DOCKER}") {
             sh "docker push ${NEXUS_IMAGE}"
           }
